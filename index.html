@@ -163,16 +163,194 @@
                 </div>
             </section>
             <hr class="m-0" />
-            
+            <section class="resume-section" id="projects">
+                <div class="resume-section-content">
+				<h3 class="mb-0">PROJECTS</h3>
+						<h4><a href="https://github.com/smiglan/OCR-NER-for-medicine-name-from-drug-labels" target="_blank"> OCR+NER for medicine name from drug labels</a></h4>
+<p>In this project, the task of medicine name identification from Drug Label bottles using Optical Character Recognition for image to text conversion and Named entity recognition for identifying the entity of the text from OCR was investigated.<br>This can be seen from the image below.<br>Given an image of a drug bottle, medicine name has to be idenitified and bounding boxes drawn around it.<br>Note: The green bounding box represents the medicine name <em>&quot;PANTOPRAZOLE&quot;</em></p>
+<p><img align="center" src="assets/img/boundingbox.png"></p>
+<p>Other parameters can also be identified such as in the example shown below using spacy&#39;s med7 model. Such as given the input text :<em>&#39;A patient was prescribed Magnesium hydroxide 400mg/5ml suspension PO of total 30ml  bid for the next 5 days.&#39;</em>, the results would be:  </p>
+<p><img align="center"  src="assets/img/NER_med7.JPG"></p>
+<p>This involes two steps:  </p>
+<ul>
+<li>Optical character recognition for image to text conversion</li>
+<li>Named entity recognition for identifying medicine name</li>
+</ul>
+<p><strong>Tesseract Optical Character Recognition</strong>:  </p>
+<ul>
+<li>For dateset generation and model training, three methods were used. The first involved using AWS Rekognition, second one involved using font files for synthetic data generation, whereas the third one involved using hocr-tools for generating image line data for Tesseract-OCR training.  </li>
+<li>Various factors such as base model for model training, Configuration parameters such as Page Segmentation Mode, Thread limit, Preprocessing factors such as Re scaling method and size, different threshold methods for Binarization (Simple and Adaptive threshold) were analyzed for improving performance.  </li>
+</ul>
+<p><strong>Named Entity recognition</strong>:  </p>
+<ul>
+<li>Dataset generation in B-I-O tagging format</li>
+</ul>
+<p><img align="center" width = 400 src="assets/img/BIO.JPG"></p>
+<ul>
+<li>Various models such as Memory tagger, Random forest classifier, Conditional Random Fields, Sequence tagging using LSTM were trained and their performance analyzed.</li>
+</ul>
+<p>The final model had an accuracy of 76% with an average time of 1 second per image as compared to the baseline tesseract with 50% accuracy and an average time of 2.24 second per image.  </p>
+<p>The <a href="https://github.com/smiglan/OCR-NER-for-medicine-name-from-drug-labels/blob/master/Report.pdf" target="_blank"> report</a>  contains detailed instructions for the steps explained above.</p>
+
+                        <br><a href="https://github.com/smiglan/CNN-for-Leaf-Wilting-Detection-in-Soybean-Crops" target="_blank"> CNN-for-Leaf-Wilting-Detection-in-Soybean-Crops</a>
+						<ul>
+<li>Transfer learning (vgg-19) with data augmentation techniques for multi-classification of soybean crop images</li>
+<li>Semi-supervised Learning using unlabeled images based on ladder network where both supervised and unsupervised (autoencoder) parts are trained simultaneously to minimize the loss</li>
+</ul>
+                        <br><h4><a href="https://github.com/smiglan/Face-Detection-and-Recognition" target="_blank"> Face-Detection-and-Recognition</a></h4>
+                        <h5 id="face-image-classification-using-gaussian-model-mixture-of-gaussian-model-tdistribution-factor-analysis">Face image classification using Gaussian model, Mixture of Gaussian model, tdistribution, Factor Analysis</h5>
+<p><strong>Data Preparation</strong>  (Data_Conversion.py)
+Extract 𝑛 = 1000 training images for face and non-face respectively, and 𝑚 = 100 testing images for face and non-face respectively from one of the provided 17 face datasets which has face bounding boxes
+annotated, both at 20 × 20 resolution. Make sure training face images and testing face images are separate, that is no face testing images are from the same person in the training set of face
+images. And, non-face images should be cropped randomly from background in the provided images in the dataset you selected.</p>
+<p><strong>Tasks</strong>  </p>
+<p>With your own face dataset created, you can train your models and test the performance.<br>For each model, report results as follows.  </p>
+<ul>
+<li>Visualize the estimated mean(s) and covariance matrix for face and non-face
+respectively; </li>
+<li>Evaluate the learned model on the testing images using 0.5 as threshold for the posterior.
+Compute false positive rate (#negatives being classified as faces / #total negatives), and
+false negative rate (#positives being classified as non-face / #total positives), and the
+misclassification rate ((#false-positives + #false-negative)/#total testing images)</li>
+<li>Plot the ROC curve where x-axis represents false positive rate and y-axis true positive
+rate (i.e, 1-false negative rate). </li>
+</ul>
+<h5 id="adaptive-boosting-adaboost-for-face-detection">Adaptive Boosting (AdaBoost) for Face Detection</h5>
+<ul>
+<li><p>Reuse the dataset from above  </p>
+</li>
+<li><p>Use Harr feature. Compute the value of each Harr feature for each sample. Each feature corresponds to a weak learner. Determine the threshold between face samples and non-face samples for all the weak learners.
+Calculate the classification error for each weak learner and draw the best ten features<br><img align="center" width = 400 src="assets/img/Haar.png"></p>
+</li>
+<li><p>Implement the Adaboost Algorithm and plot the ROC</p>
+</li>
+</ul>
+<h5 id="convolutional-neural-networks-for-face-image-classification">Convolutional Neural Networks for face image classification</h5>
+<ul>
+<li>Preprocess the data and select data augmentation</li>
+<li>Select the architecture</li>
+<li>Double check that the loss is reasonable without regularization</li>
+<li>Check loss with high regularization</li>
+<li>Overfitting with small data set.</li>
+<li>Checking loss with very small learning rate</li>
+<li>Checking loss with very high learning rate</li>
+<li>Checking loss for an upper bound for learning rate</li>
+<li>Hyperparameter tuning – Course to fine</li>
+<li>Model training and plots for validation loss and accuracy.</li>
+</ul>
+<h5 id="face-verification-and-recognition">Face Verification and Recognition</h5>
+<p><strong>Face Verification</strong> - &quot;is this the claimed person?&quot;. For example, at some airports, you can pass through customs by letting a system scan your passport and then verifying that you (the person carrying the passport) are the correct person. A mobile phone that unlocks using your face is also using face verification. This is a 1:1 matching problem.<br><strong>Face Recognition</strong> - &quot;who is this person?&quot;. For example, the video lecture showed a face recognition video of Baidu employees entering the office without needing to otherwise identify themselves. This is a 1:K matching problem.  </p>
+<p>FaceNet learns a neural network that encodes a face image into a vector of 128 numbers. By comparing two such vectors, you can then determine if two pictures are of the same person.</p>
+<p>In this project, the following things were implemented:  </p>
+<ul>
+<li>Implement the triplet loss function</li>
+<li>Use a pretrained model to map face images into 128-dimensional encodings</li>
+<li>Use these encodings to perform face verification and face recognition</li>
+</ul>
+
+				        <br><h4><a href="https://github.com/smiglan/Reinforcement-Learning-Optimal-Control-of-Human-Robot-Interaction-system" target="_blank"> Reinforcement Learning Optimal Control of Human-Robot Interaction system</a></h4>
+						<p>The problem of finding the optimal parameters of the model is transformed into an LQR problem which minimizes the human effort and optimizes the closed-loop behavior. 
+As the human model is difficult to estimate, Reinforcement learning is used in the paper to solve the LQR problem. 
+The plan for the project consisted of two tasks. </p>
+<ul>
+<li>The first part was the application of integral reinforcement learning </li>
+<li>the second part was using a neural network to find the optimal solution for LQR.</li>
+</ul>
+
+						
+						<br><h4><a href="https://github.com/smiglan/Image-Processing" target="_blank"> Image Processing</a></h4>
+                        <h5 id="image-blending">Image Blending</h5>
+<p>This project contains the following implementations:</p>
+<ul>
+<li><p>Implement Gaussian and Laplacian pyramid, 𝑔𝑃𝑦𝑟, 𝑙𝑃𝑦𝑟 = 𝐶𝑜𝑚𝑝𝑢𝑡𝑒𝑃𝑦𝑟(𝑖𝑛𝑝𝑢𝑡<em>𝑖𝑚𝑎𝑔𝑒, 𝑛𝑢𝑚</em>𝑙𝑎𝑦𝑒𝑟𝑠)<br><em>Input arguments</em> : 𝑖𝑛𝑝𝑢𝑡<em>𝑖𝑚𝑎𝑔𝑒 is an input image (grey, or RGB), 𝑛𝑢𝑚</em>𝑙𝑎𝑦𝑒𝑟𝑠 is the number of layers of the pyramid to be computed.<br>Depending on the size of 𝑖𝑛𝑝𝑢𝑡<em>𝑖𝑚𝑎𝑔𝑒, 𝑛𝑢𝑚</em>𝑙𝑎𝑦𝑒𝑟𝑠 needs to be checked if valid.<br>If not, use the maximum value allowed in terms of the size of 𝑖𝑛𝑝𝑢𝑡_𝑖𝑚𝑎𝑔𝑒.<br><em>Outputs</em>: 𝑔𝑃𝑦𝑟, 𝑙𝑃𝑦𝑟 are the Gaussian pyramid and Laplacian pyramid respectively.  </p>
+</li>
+<li><p>Write a simple GUI to create a black/white binary mask image. The GUI can open an image (e.g. the foreground image that you will use in blending); On the image, you can select a region of interest using either a rectangle or an eclipse, [optional] even some free-form region. Based on the opened image and the selected regions, the GUI can
+generate a black/white mask image of the same size as the opened image, in which the selected region(s) are white and the remaining black.</p>
+</li>
+<li><p>On top of the functions in (a) and (b), write a function to implement Laplacian pyramid blending   </p>
+</li>
+</ul>
+<p>Example:</p>
+<p><img align="center" width = 600 src="assets/img/ImageBleding1.JPG">
+<img align="center" width = 600 src="assets/img/ImageBleding2.JPG"></p>
+<h5 id="two-dimensional_convolution">Two-dimensional_Convolution</h5>
+<p>Write a function to implement 𝑔 = 𝑐𝑜𝑛𝑣2(𝑓,𝑤, 𝑝𝑎𝑑), where 𝑓 is an input image (grey, or RGB), 𝑤 is a 2-D kernel (e.g., 3 × 3 box filter), and 𝑝𝑎𝑑 represents the 4 padding type :
+clip/zero-padding, wrap around, copy edge, and reflect across edge, as illustrated in the following example</p>
+<p><img align="center" width = 600 src="assets/img/Padding.JPG"></p>
+<p>Example Output of Convolution funciton for Sobel_X  filter:</p>
+<p><img align="center" width = 600 src="assets/img/Sobelx.png"></p>
+<h5 id="2d-fft">2D FFT</h5>
+<p>Using the built-in 1-D FFT to implement 𝐹 = 𝐷𝐹𝑇2(𝑓) from scratch, where 𝑓 is an input grey image.<br>Using the DFT2 to implement the inverse FFT of an input transform 𝐹, 𝑔 = 𝐼𝐷𝐹𝑇2(𝐹) from scratch.  </p>
+<h5 id="smoothness-prior">Smoothness Prior</h5>
+<p>Given an image 𝐼, consider all valid pairs of neighboring pixels, compute the difference between their intensity or color values, and plot the histogram.</p>
+<ul>
+<li><strong>Neighbors</strong>: e.g., for a 100x100 image, consider all valid pairs of (𝑥, 𝑦) and
+(𝑥 + 1, 𝑦).</li>
+<li><strong>Difference</strong>: using the squared of difference for intensity, RGB, HSV and Lab. </li>
+<li><strong>Histogram</strong>: Visualize the histogram.</li>
+</ul>
+
+						
+						<br><h4><a href="https://github.com/smiglan/Algorithms" target="_blank">  Algorithms</a></h4>
+
+<h5 id="__sorting__"><strong>Sorting</strong></h5>
+<p>In this assignment, 3 sorting algorithms were implemented: bubble sort, quick sort, and
+merge sort and compared again files of different sizes starting from 2500 lines to 1 million lines</p>
+<p>The following plots are recorded for growth of sorting time as a function of data size:</p>
+<p>Note, that in bubble sort, for 1Ma, 1Mb, 1Mc, only 50000 lines are used due to
+excessive time requirements. Also, 1Ma, Mb and 1Mc files have 1 million lines with different configurations</p>
+<p><img align="center" width = 600 src="assets/img/bubble_sort_time.JPG">
+<img align="center" width = 600 src="assets/img/merge_sort_time.JPG">
+<img align="center" width = 600 src="assets/img/quick_sort_time.JPG"></p>
+<h5 id="__regular-expressions__"><strong>Regular Expressions</strong></h5>
+<p>Design and implement solutions for the following problems. </p>
+<p><em>DIALOG</em>: Given a list of input files similar to the sample files (but not previously known), extract
+all the dialog into a separate output file. In the output, retain the quotation or other
+marks that separate the dialog from the narrative.</p>
+<p><em>DIALOG SEARCH</em>: Given one input file similar to the sample files (but not previously known),
+and a search string, determine if the search string appears within dialog in the sample
+file. If it does, then output each Chapter number/title (equivalently for anthologies,
+the number/name of the individual work) in which the search string appears.
+Example:</p>
+<p><em>DIALOG</em></p>
+<p>To run the script, navigate to the appropriate folder and run the script dialogscript.py</p>
+<p>The result of running this script is as follows:<br><code>File output successful with file name outputdracula.txt</code><br><code>File output successful with file name outputsh.tx</code>   </p>
+<p>These files contains all the dialog sepearated into a separate output file.</p>
+<p><em>DIALOG SEARCH</em></p>
+<p>To run the script, navigate to the appropriate folder and run the script dialogsearchscript.py</p>
+<p>The result of running this script is as follows:<br><code>filename : dracula.txt</code><br><code>search string : red eyes</code><br><code>Found in CHAPTER VII CUTTING FROM &quot;THE DAILYGRAPH,&quot; 8 AUGUST</code><br><code>Found in CHAPTER VII CUTTING FROM &quot;THE DAILYGRAPH,&quot; 8 AUGUST</code><br><code>Found in CHAPTER XI Lucy Westenra&#39;s Diary.</code><br><code>Found in CHAPTER XIX JONATHAN HARKER&#39;S JOURNAL</code><br><code>Found in CHAPTER XXVII MINA HARKER&#39;S JOURNAL</code>   </p>
+<h5 id="__diff-using-dynamic-programming-approach-to-longest-common-subsequence__"><strong>Diff using dynamic programming approach to Longest Common Subsequence</strong></h5>
+<p>This assignment had the following three parts:</p>
+<ul>
+<li>Implement a hash function for strings. Use a modulo function to compress the resulting value to 10 bits, i.e. to be in the range [0, 1023]. </li>
+<li>Use your hash function to implement a hashfile program that takes a filename on
+the command line and produces a 10-bit hash of each line. </li>
+<li>Implement the dynamic programming algorithm for diff, using the dynamic programming
+approach to the Longest Common Subsequence problem. Use the code from your hashfile
+implementation. </li>
+</ul>
+<h5 id="__shortestpath-using-bfs__"><strong>Shortest-Path using Breadth-First-Search</strong></h5>
+<p>Finding the 4-, 8-, or m-shortest path in an image (graph)  </p>
+<ul>
+<li>Input arguments: an image, a predefined set V, two pixel locations p and q
+inside the image, the path type (4-, 8-, or m-path)</li>
+<li>Outputs: the length of the shortest path, and the path (i.e., the sequence of
+pixels)</li>
+</ul>
+
+
+                </div>
+            </section>
+            <hr class="m-0" />
             <!--
-            <!-- Interests-->
+            <!-- 
             <section class="resume-section" id="resume">
                 <div class="resume-section-content">
 				<a href="assets\docs\Shubham_Miglani.pdf">ok</a>
 
                 </div>
             </section>
-            <hr class="m-0" />
+            <hr class="m-0" />-->
             <!-- Awards-->
 			<!-- Education-->
             <section class="resume-section" id="certifications">
@@ -182,6 +360,7 @@
                         <div class="flex-grow-1">
                             <h3 class="mb-0">Coursera</h3>
 							 <a href="https://www.coursera.org/learn/neural-networks-deep-learning?specialization=deep-learning" target="_blank"> Neural Networks and Deep Learning</a>
+							 
                         <br><a href="https://www.coursera.org/learn/deep-neural-network?specialization=deep-learning" target="_blank"> Improving Deep Neural Networks: Hyperparameter tuning, Regularization and Optimization</a>
                         <br><a href="https://www.coursera.org/learn/machine-learning-projects?specialization=deep-learning" target="_blank"> Structured Machine Learning Projects</a>
                         <br><a href="https://www.coursera.org/learn/convolutional-neural-networks?specialization=deep-learning" target="_blank"> Convolutional Neural Networks</a>
