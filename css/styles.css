@@ -201,6 +201,33 @@ li {
   margin-bottom: 12px;
 }
 
+.card-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+
+.card-kicker.saved {
+  color: var(--muted);
+}
+
+.card.featured {
+  background: var(--panel);
+  border-color: rgba(37, 99, 235, 0.35);
+  box-shadow: 0 18px 50px rgba(37, 99, 235, 0.08);
+}
+
+.card.saved {
+  background: var(--panel);
+  border-color: rgba(76, 85, 103, 0.18);
+}
+
 .card-head {
   display: flex;
   justify-content: space-between;
