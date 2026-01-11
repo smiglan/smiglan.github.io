@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AWS re:Invent 2025: The Year Infrastructure Caught Up to Agents | Shubham Miglani</title>
+  <meta name="description" content="A technical recap of AWS re:Invent 2025: Agent Core, retrieval tiering (OpenSearch + S3 Vectors), Nova Act, and what this means for building production agents.">
+
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="AWS re:Invent 2025: The Year Infrastructure Caught Up to Agents">
+  <meta property="og:description" content="A technical recap of AWS re:Invent 2025: Agent Core, retrieval tiering (OpenSearch + S3 Vectors), Nova Act, and what this means for building production agents.">
+  <meta property="og:url" content="https://smiglan.github.io/notes/aws-reinvent-2025/reinvent-2025-recap.html">
+
+  <link rel="canonical" href="https://smiglan.github.io/notes/aws-reinvent-2025/reinvent-2025-recap.html">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/css/post.css">
+</head>
+<body>
+  <main class="post">
+    <header class="post-header">
+      <a class="home" href="/">&larr; Home</a>
+      <h1>AWS re:Invent 2025: The Year Infrastructure Caught Up to Agents</h1>
+      <p class="subtitle">Published notes and synthesis from AWS re:Invent 2025.</p>
+    </header>
+
+    <article class="post-body">
+<h1 id="aws-reinvent-2025-the-year-infrastructure-caught-up-to-agents">AWS re:Invent 2025: The Year Infrastructure Caught Up to Agents<a class="headerlink" href="#aws-reinvent-2025-the-year-infrastructure-caught-up-to-agents" title="Permanent link">&para;</a></h1>
+<p>I just got back from my first re:Invent. Over 60,000 people descending on Las Vegas to watch AWS announce&hellip; infrastructure for AI agents. Which sounds boring until you realize: boring infrastructure is exactly what production systems need.</p>
+<p>The conference had the usual spectacle—giant keynotes, endless expo halls, that particular brand of Vegas-meets-tech-conference surrealism. But the useful part wasn&rsquo;t the announcements themselves. It was getting 20 minutes with the people actually building these services, understanding what problems they&rsquo;re <em>actually</em> solving, and figuring out what that means for what we should build next.</p>
+<p>Here&rsquo;s what stuck with me.</p>
+<h2 id="the-thing-nobody-says-out-loud-about-agents">The thing nobody says out loud about agents<a class="headerlink" href="#the-thing-nobody-says-out-loud-about-agents" title="Permanent link">&para;</a></h2>
+<p>Most agent demos die the same way: they work great in the demo, then you try to put them in production and discover that 80% of your time is spent on problems that have nothing to do with the model.</p>
+<p>The model isn&rsquo;t calling tools correctly. Your retrieval system is slow and expensive. You can&rsquo;t audit what the agent decided or why. Your authentication story is &ldquo;we&rsquo;ll figure it out later.&rdquo; You&rsquo;re burning tokens on redundant context. The whole thing falls over when someone changes an API.</p>
+<p>This year felt different because AWS is finally shipping the boring parts. Not &ldquo;better models&rdquo; (though they announced those too). The boring parts. The infrastructure.</p>
+<h2 id="agent-core-stateful-compute-that-doesnt-bankrupt-you">Agent Core: stateful compute that doesn&rsquo;t bankrupt you<a class="headerlink" href="#agent-core-stateful-compute-that-doesnt-bankrupt-you" title="Permanent link">&para;</a></h2>
+<p>Marc Brooker (AWS&rsquo;s Vice President and Distinguished Engineer for Agentic AI) did a deep dive on Agent Core, and one detail jumped out: <strong>the cost model bills based on actual CPU consumption and memory usage per second</strong>. During I/O wait periods (when the agent is waiting for LLM responses, tool calls, or API responses), if no CPU is being consumed, you&rsquo;re only paying for memory.</p>
+<p>This is massive for long-running agent workflows. Most agents spend 30-70% of their time in I/O wait: waiting for a tool to return, waiting for a human approval, waiting for some external API. Traditional compute services charge for pre-allocated resources regardless of whether you&rsquo;re using them. Agent Core&rsquo;s consumption-based pricing means idle CPU time during waits is essentially free.</p>
+<p>Agent Core is built on Firecracker (same tech that powers Lambda), but redesigned specifically for agents:
+- Extended runtime windows for long-running workflows
+- Stateful memory that persists across tool calls
+- No compute billing during waiting periods</p>
+<p>The other interesting bit: they&rsquo;re adding a <strong>policy framework</strong> that uses neuro-symbolic AI internally. That&rsquo;s a fancy way of saying &ldquo;deterministic constraints + LLM reasoning.&rdquo; You can now specify what an agent is allowed to do with mathematical certainty, not just prompt engineering and crossed fingers.</p>
+<p>For regulated industries (healthcare, finance, government), this is the difference between &ldquo;interesting prototype&rdquo; and &ldquo;we can actually deploy this.&rdquo;</p>
+<h2 id="the-retrieval-system-you-didnt-know-you-needed">The retrieval system you didn&rsquo;t know you needed<a class="headerlink" href="#the-retrieval-system-you-didnt-know-you-needed" title="Permanent link">&para;</a></h2>
+<p>If you&rsquo;ve built anything with RAG, you know: retrieval is where things get expensive and slow.</p>
+<p>AWS announced two things that form a natural tiering strategy:</p>
+<h3 id="opensearch-serverless-with-gpu-acceleration">OpenSearch Serverless with GPU acceleration<a class="headerlink" href="#opensearch-serverless-with-gpu-acceleration" title="Permanent link">&para;</a></h3>
+<ul>
+<li>~100ms latency for vector search</li>
+<li>Up to 10× performance improvement</li>
+<li>Auto-optimization for indexing</li>
+</ul>
+<p>The catch: GPU acceleration only kicks in when your data segments exceed 50MB. For a lot of workloads, you&rsquo;ll never hit that threshold. AWS was refreshingly honest about this in the sessions. If you need ultra-low latency at smaller scale, use <strong>OpenSearch Managed</strong> instead of Serverless.</p>
+<h3 id="s3-vectors-now-ga">S3 Vectors (now GA)<a class="headerlink" href="#s3-vectors-now-ga" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Sub-second latency (&lt;1s)</li>
+<li>Up to 90% cheaper than traditional vector databases</li>
+<li>Perfect for &ldquo;cold&rdquo; vectors that don&rsquo;t need sub-100ms retrieval</li>
+</ul>
+<p>The smart architecture is obvious once you see it: hot vectors in OpenSearch, cold vectors in S3. This is the same pattern we&rsquo;ve used for databases forever. We&rsquo;re just finally applying it to embeddings.</p>
+<p>One architect I talked to is moving everything older than a week to S3 and keeping only recent/frequently-accessed vectors hot. Cost dropped by 70%, latency barely changed for their use case.</p>
+<h2 id="nova-act-when-the-api-doesnt-exist">Nova Act: when the API doesn&rsquo;t exist<a class="headerlink" href="#nova-act-when-the-api-doesnt-exist" title="Permanent link">&para;</a></h2>
+<p>The most surprising session was on Nova Act and Browser Use. This is AWS&rsquo;s answer to &ldquo;what if the system you need to automate doesn&rsquo;t have an API?&rdquo;</p>
+<p>Here&rsquo;s how it works:
+1. Agent runs through a workflow in a sandboxed browser (agentic mode, ~45 seconds)
+2. Records a trajectory of actions
+3. Replays it deterministically (~15 seconds)
+4. If the UI changes, automatically falls back to agentic reasoning and creates a new trajectory</p>
+<p>Full observability: screenshots, step logs, reasoning traces.</p>
+<p>The use cases are more real than I expected:
+- <strong>1Password</strong> uses it to test login flows across thousands of sites (because every site&rsquo;s login flow is slightly different and breaks in its own special way)
+- <strong>Blue Origin</strong> uses it for UI testing</p>
+<p>The insight: don&rsquo;t replace Selenium/Playwright. Augment them. Run deterministic automation where you can, inject LLM reasoning only where the UI is unpredictable or changing.</p>
+<h2 id="bedrock-data-automation-expensive-but-powerful">Bedrock Data Automation: expensive but powerful<a class="headerlink" href="#bedrock-data-automation-expensive-but-powerful" title="Permanent link">&para;</a></h2>
+<p>Bedrock Knowledge Bases now support multimodal embeddings: text, audio, video, images. Unified ingestion pipeline. Sounds great.</p>
+<p>The reality check from the sessions: <strong>this is prohibitively expensive for high-volume ingestion</strong>. Embedding costs scale linearly with:
+- Frame sampling for video
+- Page-level image embeddings<br />
+- Audio chunking</p>
+<p>If you&rsquo;re processing thousands of multimedia files per day, the bill will hurt. But if you have a smaller, curated knowledge base (FAQs, compliance docs, training materials), the convenience is worth it.</p>
+<p>Know your scale before you commit.</p>
+<h2 id="kiro-momentum-in-aws-native-development">Kiro: momentum in AWS-native development<a class="headerlink" href="#kiro-momentum-in-aws-native-development" title="Permanent link">&para;</a></h2>
+<p>Kiro wasn&rsquo;t new at re:Invent (it was announced earlier), but the number of sessions dedicated to it and the momentum behind it were notable. I&rsquo;ve been using it with Claude Opus 4.5 for the past few weeks, and it&rsquo;s hit that inflection point where it actually works on real, hard problems.</p>
+<p>What makes Kiro valuable is its deep integration with AWS infrastructure. It has native access to your AWS resources: CodeCommit, CloudFormation, Lambda functions, S3, DynamoDB, and the rest of your stack. This isn&rsquo;t just about code completion. Kiro can read your infrastructure state, understand your deployment patterns, and generate code that fits how your systems actually work.</p>
+<p>The practical difference: when you ask it to add a new API endpoint, it knows your existing API Gateway configuration, follows your Lambda naming conventions, updates the right IAM policies, and modifies your CloudFormation templates. It&rsquo;s working with your actual infrastructure, not guessing.</p>
+<p>Tools like Claude Code or Cursor might have similar general coding capabilities, and they&rsquo;re excellent for what they do. But if you&rsquo;re already building on AWS, Kiro&rsquo;s native integrations mean you don&rsquo;t spend time explaining your infrastructure to the agent. It already knows.</p>
+<p>AWS is using Kiro internally across the company, which gives me more confidence than the usual &ldquo;we built this for customers&rdquo; pitch. Matt Garman shared one example: a 30-developer project estimated at 18 months was completed in 76 days with 6 developers.</p>
+<p>The spec-driven approach (Requirements, Design, Tasks) adds process, but it&rsquo;s how you&rsquo;d actually work on production systems. For teams deep in the AWS ecosystem, the infrastructure awareness makes Kiro worth evaluating.</p>
+<h2 id="key-takeaways-for-building-production-agents">Key takeaways for building production agents<a class="headerlink" href="#key-takeaways-for-building-production-agents" title="Permanent link">&para;</a></h2>
+<p>Based on what I learned across sessions and conversations with AWS engineers, here are the architectural decisions I&rsquo;m prioritizing:</p>
+<p><strong>Treat retrieval as infrastructure, not a feature.</strong> Stop thinking of vector search as &ldquo;just embed and query.&rdquo; This means benchmarking p95 latency like you would for a database, planning hot/cold storage tiers from day one, budgeting for index rebuilds explicitly, and monitoring tail latency and timeouts. One architect I met cut costs by 70% by moving vectors older than a week to S3 while keeping only recent/hot vectors in OpenSearch.</p>
+<p><strong>Schema-validate everything.</strong> Use structured outputs (Bedrock Responses API standardizes this). Reject or repair invalid tool calls explicitly rather than silently trying to recover. Most agent failures in production aren&rsquo;t intelligence failures, they&rsquo;re interface failures. Make outputs machine-checkable.</p>
+<p><strong>Put tools behind a protocol boundary.</strong> Use MCP or a similar standard to centralize authentication, rate limiting, and audit logging at the gateway layer. This turns tool integration from &ldquo;agent hack&rdquo; into &ldquo;platform capability&rdquo; and makes the system auditable and governable.</p>
+<p><strong>Match your cost model to your workflow.</strong> If your agent spends significant time in I/O wait (most do), Agent Core&rsquo;s consumption-based pricing can reduce costs substantially since you&rsquo;re only paying for memory when no CPU is consumed. If you&rsquo;re doing continuous compute, Lambda might be cheaper. Run the numbers for your specific use case.</p>
+<p><strong>Consider spec-driven development for production codebases.</strong> The Kiro approach of defining requirements and design before writing code adds upfront process, but it produces maintainable, documented software that actually reflects your team&rsquo;s standards. For complex multi-repo work or regulated environments, this structure is what makes agentic coding production-ready rather than just fast prototyping.</p>
+<h2 id="the-thing-i-didnt-expect-roi-is-already-real">The thing I didn&rsquo;t expect: ROI is already real<a class="headerlink" href="#the-thing-i-didnt-expect-roi-is-already-real" title="Permanent link">&para;</a></h2>
+<p>Multiple organizations across different industries reported <strong>3-4× ROI</strong> on early agent deployments. Not projections. Actual, measured returns from systems in production.</p>
+<p>The catch: every successful deployment was built on partnerships and iteration, not just &ldquo;we bought a model and shipped it.&rdquo; This stuff still requires real engineering, domain expertise, and continuous improvement.</p>
+<p>But the economics are starting to work.</p>
+<h2 id="measuring-what-matters">Measuring what matters<a class="headerlink" href="#measuring-what-matters" title="Permanent link">&para;</a></h2>
+<p>If there&rsquo;s one thing I&rsquo;m stealing from these sessions, it&rsquo;s the metrics. Stop measuring &ldquo;vibes.&rdquo; Measure:</p>
+<ul>
+<li><strong>Tool call validity rate</strong>: % of calls passing schema validation</li>
+<li><strong>Tool call success rate</strong>: % succeeding on first try (no retries)</li>
+<li><strong>Evidence coverage</strong>: % of answers citing retrieved documents  </li>
+<li><strong>Retrieval p95 latency</strong>: tail latency kills user experience</li>
+<li><strong>Cost per successful task</strong>: dollars per completed workflow</li>
+</ul>
+<p>These turn &ldquo;it feels better&rdquo; into &ldquo;it is 23% better and here&rsquo;s the chart.&rdquo;</p>
+<h2 id="why-you-should-go">Why you should go<a class="headerlink" href="#why-you-should-go" title="Permanent link">&para;</a></h2>
+<p>The announcements are public. You can read the blog posts. But here&rsquo;s what you can&rsquo;t get remotely:</p>
+<p><strong>Direct access to the people building these services.</strong> Twenty minutes with a principal engineer answering &ldquo;okay but what about X?&rdquo; is worth more than hours of documentation. You get to understand not just what shipped, but what problems they&rsquo;re actually solving and what&rsquo;s coming next.</p>
+<p><strong>Pattern recognition across industries.</strong> Hearing what five different companies are doing with the same primitive surfaces patterns you wouldn&rsquo;t discover alone. The problem you&rsquo;re stuck on might already be solved in a completely different domain.</p>
+<p><strong>Serendipitous connections.</strong> The person you chat with at a workshop might be the one who unblocks you three months from now. These relationships compound over time.</p>
+<p><strong>Real feedback loops.</strong> When you tell an AWS engineer &ldquo;this doesn&rsquo;t work for our use case,&rdquo; they often take notes and follow up. Your production pain points can influence the roadmap.</p>
+<p>The scale is massive (over 60,000 attendees), the logistics require planning (venues span miles of the Las Vegas Strip, so pick your hotel strategically based on your session clusters), and you&rsquo;ll absolutely need comfortable shoes (expect 20,000+ steps per day).</p>
+<p>But if you&rsquo;re building anything in this space, the access and pattern recognition are worth it.</p>
+<hr />
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<p><strong>AWS re:Invent 2025 Official Announcements:</strong>
+- Amazon Bedrock Responses API: https://aws.amazon.com/about-aws/whats-new/2024/12/amazon-bedrock-responses-api-from-openai/
+- API Gateway MCP Proxy Support: https://aws.amazon.com/about-aws/whats-new/2024/12/api-gateway-mcp-proxy-support/
+- Amazon S3 Vectors GA: https://aws.amazon.com/blogs/aws/amazon-s3-vectors-now-generally-available-with-increased-scale-and-performance/
+- OpenSearch GPU Acceleration: https://aws.amazon.com/blogs/aws/amazon-opensearch-service-improves-vector-database-performance-and-cost-with-gpu-acceleration-and-auto-optimization/
+- Amazon Nova Act: https://aws.amazon.com/nova/act/
+- Amazon Nova Act SDK Blog: https://aws.amazon.com/blogs/machine-learning/amazon-nova-act-sdk-preview-path-to-production-for-browser-automation-agents/
+- Kiro Autonomous Agent: https://kiro.dev/blog/introducing-kiro-autonomous-agent/
+- Kiro Official Site: https://kiro.dev/</p>
+<p><strong>Technical Deep Dives:</strong>
+- Marc Brooker on Agents: https://www.amazon.science/blog/demystifying-agents
+- Marc Brooker on Firecracker and Agent Core: https://brooker.co.za/blog/2025/09/18/firecracker.html
+- AWS Agent Core Announcements: https://techcrunch.com/2024/12/02/aws-announces-new-capabilities-for-its-ai-agent-builder/
+- Kiro Spec-Driven Development: https://repost.aws/articles/AROjWKtr5RTjy6T2HbFJD_Mw/%F0%9F%91%BB-kiro-agentic-ai-ide-beyond-a-coding-assistant-full-stack-software-development-with-spec-driven-ai</p>
+<p><strong>re:Invent 2025 Coverage:</strong>
+- AWS re:Invent Official Site: https://reinvent.awsevents.com/
+- SiliconANGLE Kiro Coverage: https://siliconangle.com/2025/12/04/kiro-levels-agent-based-software-development-awsreinvent/
+- TechCrunch on Kiro Agents: https://techcrunch.com/2025/12/02/amazon-previews-3-ai-agents-including-kiro-that-can-code-on-its-own-for-days/
+- Caylent Kiro First Impressions: https://caylent.com/blog/kiro-first-impressions</p>
+<p><em>All AWS product information and technical specifications referenced in this article were current as of December 2025.</em></p>
+    </article>
+
+    <footer class="post-footer">
+      <p>Back to <a href="/">smiglan.github.io</a>.</p>
+    </footer>
+  </main>
+</body>
+</html>
